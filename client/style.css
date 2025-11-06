@@ -1,0 +1,97 @@
+:root {
+  --bg: #0b1020;
+  --panel: #111831;
+  --text: #e6e6e6;
+  --muted: #9aa4c7;
+  --accent: #5aa9ff;
+  --danger: #ff6b6b;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+  background: radial-gradient(1200px 800px at 70% -10%, #1d2b52, var(--bg));
+  color: var(--text);
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+#app { display: contents; }
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(17,24,49,0.8);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid #22305f;
+}
+h1 { font-size: 18px; margin: 0 12px 0 0; font-weight: 600; }
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.toolbar label { font-size: 14px; color: var(--muted); }
+.toolbar input[type="range"] { vertical-align: middle; }
+.toolbar button {
+  background: #1b2751;
+  color: var(--text);
+  border: 1px solid #2b3c79;
+  padding: 6px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.toolbar button:hover { background: #223270; }
+.latency { margin-left: 8px; color: var(--muted); }
+
+main {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 0;
+}
+aside {
+  border-right: 1px solid #22305f;
+  background: rgba(17,24,49,0.5);
+  padding: 10px;
+  overflow: auto;
+}
+.stage {
+  position: relative;
+  overflow: hidden;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #0b0f1d;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+.user-cursor {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  padding: 2px 6px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  white-space: nowrap;
+}
+footer {
+  padding: 8px 12px;
+  border-top: 1px solid #22305f;
+  color: var(--muted);
+  background: rgba(17,24,49,0.7);
+}
+#userList { list-style: none; margin: 0; padding: 0; }
+#userList li { display: flex; align-items: center; gap: 8px; padding: 6px 2px; }
+.badge {
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.4);
+}
+.name { color: var(--text); }

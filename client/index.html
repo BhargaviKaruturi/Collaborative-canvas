@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Collaborative Canvas</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Collaborative Canvas</h1>
+      <div class="toolbar">
+        <label>Tool:
+          <select id="tool">
+            <option value="brush">Brush</option>
+            <option value="eraser">Eraser</option>
+          </select>
+        </label>
+        <label>Color: <input type="color" id="color" value="#2b6cb0"/></label>
+        <label>Width:
+          <input type="range" id="width" min="1" max="40" step="1" value="6"/>
+          <span id="widthVal">6</span>px
+        </label>
+        <button id="undoBtn" title="Global undo (latest op)">Undo</button>
+        <button id="redoBtn" title="Global redo">Redo</button>
+        <button id="clearBtn" title="Clear (new op)">Clear</button>
+        <span class="latency" id="latency">-- ms</span>
+      </div>
+    </header>
+
+    <main>
+      <aside>
+        <h3>Online Users</h3>
+        <ul id="userList"></ul>
+      </aside>
+      <section class="stage">
+        <canvas id="canvas"></canvas>
+      </section>
+    </main>
+
+    <footer>
+      <small>Room: <span id="roomName">default</span> • Your name: <span id="selfName">unknown</span></small>
+    </footer>
+  </div>
+
+  <!-- Socket.IO client -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="./websocket.js"></script>
+  <script src="./canvas.js"></script>
+  <script src="./main.js"></script>
+</body>
+</html>
