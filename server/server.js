@@ -122,8 +122,10 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 8080;
+const HOST = "0.0.0.0";
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Server running on PORT ${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`✅ Server running on http://${HOST}:${PORT}`);
+  console.log(`✅ WebSocket server ready for connections`);
 });
 

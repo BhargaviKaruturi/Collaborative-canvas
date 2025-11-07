@@ -185,16 +185,61 @@ const WS = (() => {
     requestUndo() { 
       if (socket && socket.connected) {
         socket.emit("history:undo");
+      } else {
+        // Queue the request if socket isn't ready yet (max 5 seconds wait)
+        let attempts = 0;
+        const maxAttempts = 50;
+        const tryUndo = () => {
+          if (socket && socket.connected) {
+            socket.emit("history:undo");
+          } else if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(tryUndo, 100);
+          } else {
+            console.error('Failed to send undo request: socket not connected');
+          }
+        };
+        tryUndo();
       }
     },
     requestRedo() { 
       if (socket && socket.connected) {
         socket.emit("history:redo");
+      } else {
+        // Queue the request if socket isn't ready yet (max 5 seconds wait)
+        let attempts = 0;
+        const maxAttempts = 50;
+        const tryRedo = () => {
+          if (socket && socket.connected) {
+            socket.emit("history:redo");
+          } else if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(tryRedo, 100);
+          } else {
+            console.error('Failed to send redo request: socket not connected');
+          }
+        };
+        tryRedo();
       }
     },
     requestClear() { 
       if (socket && socket.connected) {
         socket.emit("canvas:clear");
+      } else {
+        // Queue the request if socket isn't ready yet (max 5 seconds wait)
+        let attempts = 0;
+        const maxAttempts = 50;
+        const tryClear = () => {
+          if (socket && socket.connected) {
+            socket.emit("canvas:clear");
+          } else if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(tryClear, 100);
+          } else {
+            console.error('Failed to send clear request: socket not connected');
+          }
+        };
+        tryClear();
       }
     },
     sendCursor(pos) { 
