@@ -5,6 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Collaborative Canvas</title>
   <link rel="stylesheet" href="./style.css" />
+  <script>
+    // Set WebSocket URL dynamically
+    // For Vercel: Fetches from /api/config endpoint
+    // For local dev: Uses same origin
+    // This script runs before websocket.js to ensure URL is available
+    (async function() {
+      const isLocalhost = window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1';
+      
+      if (isLocalhost) {
+        // Local development - use same origin
+        window.__WS_URL__ = window.location.origin;
+        window.__WS_URL_READY__ = true;
+      } else {
+        // Production - try to fetch from API endpoint, fallback to Railway URL
+        try {
+          const response = await fetch('/api/config');
+          if (response.ok) {
+            const config = await response.json();
+            window.__WS_URL__ = config.wsUrl;
+          } else {
+            throw new Error('Failed to fetch config');
+          }
+        } catch (error) {
+          console.warn('Could not fetch WebSocket URL from API, using fallback:', error);
+          // Fallback to Railway URL (or set your server URL here)
+          window.__WS_URL__ = 'https://collaborative-canvas-production-48b3.up.railway.app';
+        }
+        window.__WS_URL_READY__ = true;
+      }
+    })();
+  </script>
 </head>
 <body>
   <div id="app">
