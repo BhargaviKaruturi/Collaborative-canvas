@@ -6,6 +6,40 @@ const WS = (() => {
   let latencyCb = () => {};
   let wsUrl = null;
   let socketInitialized = false;
+
+  // Queue actions until socket is connected and joined to a room
+  const pendingActions = [];
+  let lastJoinPayload = null;
+  let joinPending = false;
+
+  function isConnected() {
+    return !!(socket && socket.connected);
+  }
+
+  function flushPending() {
+    if (!isConnected() || joinPending) return;
+    while (pendingActions.length) {
+      const { action, description } = pendingActions.shift();
+      try {
+        action(socket);
+      } catch (err) {
+        console.error(`Failed to run queued ${description || "action"}`, err);
+      }
+    }
+  }
+
+  function enqueueAction(action, description) {
+    pendingActions.push({ action, description });
+    flushPending();
+  }
+
+  function sendJoinIfNeeded() {
+    if (!joinPending || !lastJoinPayload) return;
+    if (!isConnected()) return;
+    socket.emit("room:join", lastJoinPayload);
+    joinPending = false;
+    flushPending();
+  }
   
   // Wait for WebSocket URL to be ready before initializing
   async function waitForUrl() {
@@ -68,10 +102,19 @@ const WS = (() => {
       
       socket.on('connect', () => {
         console.log('✅ Connected to WebSocket server');
+        if (lastJoinPayload) {
+          joinPending = true;
+          sendJoinIfNeeded();
+        } else {
+          flushPending();
+        }
       });
       
       socket.on('disconnect', () => {
         console.log('❌ Disconnected from WebSocket server');
+        if (lastJoinPayload) {
+          joinPending = true;
+        }
       });
       
       socket.on('connect_error', (error) => {
@@ -156,91 +199,29 @@ const WS = (() => {
     get socket() { return socket || socketProxy; },
     onLatency(cb) { latencyCb = cb; },
     join(room, name) {
-      if (socket && socket.connected) {
-        socket.emit("room:join", { room, name });
-      } else {
-        // Wait for connection
-        socket?.on('connect', () => {
-          socket.emit("room:join", { room, name });
-        });
-      }
+      lastJoinPayload = { room, name };
+      joinPending = true;
+      sendJoinIfNeeded();
     },
     sendStrokeEvent(evt) {
-      if (socket && socket.connected) {
-        // Use reliable delivery so other clients see strokes in-progress
-        socket.emit("stroke:event", evt);
-      } else {
-        // Queue the event if socket isn't ready yet
-        console.warn('Socket not connected, queuing stroke event:', evt.type);
-        const trySend = () => {
-          if (socket && socket.connected) {
-            socket.emit("stroke:event", evt);
-          } else {
-            setTimeout(trySend, 100);
-          }
-        };
-        trySend();
-      }
+      enqueueAction(sock => {
+        sock.emit("stroke:event", evt);
+      }, `stroke:${evt.type}`);
     },
     requestUndo() { 
-      if (socket && socket.connected) {
-        socket.emit("history:undo");
-      } else {
-        // Queue the request if socket isn't ready yet (max 5 seconds wait)
-        let attempts = 0;
-        const maxAttempts = 50;
-        const tryUndo = () => {
-          if (socket && socket.connected) {
-            socket.emit("history:undo");
-          } else if (attempts < maxAttempts) {
-            attempts++;
-            setTimeout(tryUndo, 100);
-          } else {
-            console.error('Failed to send undo request: socket not connected');
-          }
-        };
-        tryUndo();
-      }
+      enqueueAction(sock => {
+        sock.emit("history:undo");
+      }, "history:undo");
     },
     requestRedo() { 
-      if (socket && socket.connected) {
-        socket.emit("history:redo");
-      } else {
-        // Queue the request if socket isn't ready yet (max 5 seconds wait)
-        let attempts = 0;
-        const maxAttempts = 50;
-        const tryRedo = () => {
-          if (socket && socket.connected) {
-            socket.emit("history:redo");
-          } else if (attempts < maxAttempts) {
-            attempts++;
-            setTimeout(tryRedo, 100);
-          } else {
-            console.error('Failed to send redo request: socket not connected');
-          }
-        };
-        tryRedo();
-      }
+      enqueueAction(sock => {
+        sock.emit("history:redo");
+      }, "history:redo");
     },
     requestClear() { 
-      if (socket && socket.connected) {
-        socket.emit("canvas:clear");
-      } else {
-        // Queue the request if socket isn't ready yet (max 5 seconds wait)
-        let attempts = 0;
-        const maxAttempts = 50;
-        const tryClear = () => {
-          if (socket && socket.connected) {
-            socket.emit("canvas:clear");
-          } else if (attempts < maxAttempts) {
-            attempts++;
-            setTimeout(tryClear, 100);
-          } else {
-            console.error('Failed to send clear request: socket not connected');
-          }
-        };
-        tryClear();
-      }
+      enqueueAction(sock => {
+        sock.emit("canvas:clear");
+      }, "canvas:clear");
     },
     sendCursor(pos) { 
       if (socket && socket.connected) {
